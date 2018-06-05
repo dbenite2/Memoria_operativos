@@ -3,7 +3,8 @@
 #include <bitset>
 #include <string>
 #include <cmath>
-#include <vector>
+#include <array>
+#include <algorithm>
 
 using namespace std;
 
@@ -22,7 +23,7 @@ int sacarBase(string dato,int bitAddress,int tamPag){
   ss << hex << dato;
   unsigned n;
   ss >> n;
-  bitset<8> b(n);
+  bitset<8> daniel(n);
 //   if(bitAddress%2 == 0){
 //     if(bitAddress == 2){
 //         bitset<2> b(n);
@@ -40,7 +41,7 @@ int sacarBase(string dato,int bitAddress,int tamPag){
 //         bitset<128> b(n);
 //     }
   
-  string direccion = b.to_string();
+  string direccion = daniel.to_string();
   cout << "base pagina: " << direccion << endl;
   int address = stoi(direccion.substr(0,numPag),0,2);
   return address;
@@ -91,6 +92,70 @@ int fifo(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int con
     }
 }
 
+int LRU(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont){
+    int arrPeso[frames];
+    int peso = frames;
+    for(int j = 0;j < frames ;j++){
+        arrPeso[j] = peso;
+        peso--;
+        cout << " arrPeso: " << arrPeso[j] << endl;
+    }
+    int arrLength(sizeof(arrPeso)/sizeof(arrPeso[0]));
+    string dato;
+    while (cin >> dato){
+        int base = sacarBase(dato,bitAddress,tamPag);
+        cout << "base: " << base << endl;
+        int i = 0;
+        bool salir = false;
+        int *max = max_element(arrPeso,arrPeso+arrLength);
+        int posMax = distance(arrPeso,find(arrPeso,arrPeso+arrLength,*max));
+        if(cont == frames){
+            while(i<frames && !salir){
+                if (marcos[i] == base){
+                    salir = true;
+                    for(int k = 0; k< frames; k++){
+                        arrPeso[k] +=1;
+                    }
+                arrPeso[posMax] = frames;
+                }
+                i++;
+            }
+        
+            //LRU
+            cout << "max: " << *max << endl;
+            cout << "posMax: " << posMax << endl;
+            if(!salir){
+                marcos[posMax] = base;
+                for(int k = 0; k< frames; k++){
+                    arrPeso[k] +=1;
+                }
+                arrPeso[posMax] = frames;
+            }
+            
+        }else{
+            
+            while(i < cont && !salir){
+                if(marcos[i] == base){
+                    salir = true;
+                }
+                i++;
+            }
+                
+            if(!salir){
+                marcos[cont] = base;
+                cont++;
+            }
+        }
+        cout << "direccion: " << dato;
+        for(int i = 0; i< frames; i++){
+            cout << "  f" << i << ": " << marcos[i];
+        }
+        cout << endl;    
+        
+        
+    }
+}
+
 int main(){
     int bitAddress; //8
     int tamPag = 0; //32
@@ -108,7 +173,9 @@ int main(){
     int cont = 0;
     int leerDireccion = 0;
     if(algoritmo == 0){
-    fifo(bitAddress,tamPag,marcos,frames,siguiente,cont);
+        fifo(bitAddress,tamPag,marcos,frames,siguiente,cont);
+    }else if (algoritmo == 1){
+        LRU(bitAddress,tamPag,marcos,frames,siguiente,cont);
     }
     return 0;
 }
