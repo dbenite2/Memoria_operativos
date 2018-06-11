@@ -1,3 +1,6 @@
+//Autores: David Alejandro Benitez Cuevas 
+//         Efrain Gonzales Arias
+
 #include <iostream>
 #include <sstream>
 #include <bitset>
@@ -11,198 +14,98 @@ using namespace std;
 
 
 
-int sacarBase(string dato,int bitAddress,int tamPag){
+int getOffSet(int tamPag){
   
-  double desplazamiento = log2(tamPag);
-  int numPag = 0;
-  cout << "desplazamiento: " << desplazamiento << endl;
-    numPag = bitAddress - desplazamiento;
-    
-
-  cout << "numPag: " << numPag << endl;
-  stringstream ss;
-  ss << hex << dato;
-  unsigned n;
-  ss >> n;
-  bitset<8> daniel(n);
-//   if(bitAddress%2 == 0){
-//     if(bitAddress == 2){
-//         bitset<2> b(n);
-//     }else if(bitAddress == 4){
-//         bitset<4> b(n);
-//     }else if(bitAddress == 8){
-//         bitset<8> b(n);
-//     }else if(bitAddress == 16){
-//         bitset<16> b(n);
-//     }else if(bitAddress == 32){
-//         bitset<32> b(n);
-//     }else if(bitAddress == 64){
-//         bitset<64> b(n);
-//     }else{
-//         bitset<128> b(n);
-//     }
-  
-  string direccion = daniel.to_string();
-  cout << "base pagina: " << direccion << endl;
-  int address = stoi(direccion.substr(0,numPag),0,2);
-  return address;
+  stringstream str;
+  unsigned int log = 0;
+  while(tamPag >>=1){
+      log++;
+  }
+  return log;
 }
 
-int optimo(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont){
-    // while(leerDireccion){
-    //     sacarbase();
-    //     arreglo.push base || meter la base(base)
-    // }
-    // for (i < base.size){
-    //     i = 0
-    //     salir = false;
-    //     if(cont == frames){
-    //         if y ciclonormal
-    //     }
-    // }
-    string dato;
+bool potencia(int tamPag){
+    if(tamPag % 1 == 0){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+void optimo(int *marcos,vector<string>& paginas,int offSet,int frames){
     int pageFault = 0;
-    int nPagina = 0;
-    vector<int>paginas;
-    for (int i = 0; i<frames;i++){
-        marcos[i] = -1;
-    }
-    int i,j,k,l;
-    while(cin >> dato){
-        if(dato == "exit"){break;}
-        int base = sacarBase(dato,bitAddress,tamPag);
-        paginas.push_back(base);
-        cout << paginas.at(0) << endl;
-    }
-
-
-    
-    for(i=0;i<nPagina;i++){
-       int paginaPresente = 0;
-          
-        for(j=0;j<frames;j++){
-            if(paginas.at(i) == marcos[j]){
-                  paginaPresente = 1;
-                    break;
+    for (int i = 0; i < paginas.size(); i++){
+        stringstream str;
+        str << paginas.at(i);
+        int hexa;
+        str >> hex >> hexa;
+        int base = hexa >> offSet << offSet;
+        int flag = 0;
+        for(int j = 0; j < frames; j++){
+            if(base == marcos[j]){
+                flag = 1;
+                break;
             }
         }
-        
-          
-        if(paginaPresente == 0){
+        if(flag == 0){
             pageFault++;
-          
-            
-             int isFrameEmpty = 0;
-         
-                 for(j=0;j<frames;j++){
-                     if(marcos[j] == -1)
-                        {  isFrameEmpty = 1;
-                            break;
-                        }
+            int menosUsado[2] = {-1,-1};
+            for(int j = 0; j < frames; j++){
+                int paginaLongeva = -1; //valor mas a futuro a cambiar
+                for(int k = i; k < paginas.size(); k++){
+                    stringstream stream;
+                    stream << paginas.at(k);
+                    int hexa2;
+                    stream >> hex >> hexa2;
+                    int paginaFutura = hexa2 >> offSet << offSet;
+                    if (marcos[j] == paginaFutura){
+                        paginaLongeva = k;
+                    }
                 }
-      
-            if(isFrameEmpty == 1)
-                marcos[j] = paginas.at(i);
-                 
-             
-            
-            else {
-             
-             
-            int temp[frames];
-             
-            
-            for(k=0;k<frames;k++)
-            {  temp[k]=-1;
-               for(l=i+1;l<nPagina-1;l++)
-                 {
-                     if(marcos[k] == paginas.at(l))
-                       {
-                           temp[k] = l;
-                           break;
-                       }
-                 }
+                if(paginaLongeva == -1){
+                    menosUsado[0] = j;
+                    menosUsado[1] = -1;
+                    if(marcos[j] == -1){
+                        break;
+                    }
+                }else if(paginaLongeva > menosUsado[1] && menosUsado[1] != -1){
+                    menosUsado[0] = j;
+                    menosUsado[1] = paginaLongeva;
+                }
+                
             }
-             
-             
-             
-        
-        int pos = -1;
-        int flag=0;
-        for(l=0;l<frames;l++)
-        {
-            if(temp[l]==-1)
-              {
-                  pos = l;
-                  flag=1;
-                  break;
-              }
+            marcos[menosUsado[0]] = base;
         }
-          
-        if(flag==1) 
-        { marcos[pos] = paginas.at(i);
+        cout << "[ ";
+        for(int k = 0; k< frames; k++){
+            stringstream stream;
+            stream << hex << marcos[k];
+            cout << stream.str() << " ";
         }
-         
-        else{
-            
-          int max = temp[0];
-          pos = 0;
-            
-          for(k=1;k<frames;k++)
-          {
-              if(max<temp[k])
-              {
-                  pos = k;
-                  max=temp[k];
-                    
-              }
-          }
-            
-          marcos[pos] = paginas.at(i);
-            
-        }
-          
-      }
-       
+        cout <<"]" << endl;
     }
-       
-       
-     for(j=0;j<frames;j++)
-        {
-            cout<<marcos[j]<<" ";
-        }
-          
-          
-          
-    cout<<endl;
-          
-    } 
-
-     cout << "direccion: " << dato;
-        for(int i = 0; i< frames; i++){
-            cout << "  f" << i << ": " << marcos[i];
-        }
-        cout << endl;  
-    cout<<endl<<"Page Faults:"<<pageFault;
-    return 0;    
-          
+    cout << "Page Faults: " << pageFault - frames << endl;
 }
 
 
-int fifo(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont){
-    string dato;
+void fifo(int *marcos,vector<string>& paginas,int offSet,int frames){
+    int cont = 0;
+    int siguiente = 0;
     int pageFault = 0;
-    while (cin >> dato){
-        int base = sacarBase(dato,bitAddress,tamPag);
-        cout << "base: " << base << endl;
-        int i = 0;
+    for(int i = 0; i < paginas.size();i++){
+        stringstream str;
+        str << paginas.at(i);
+        int hexa;
+        str >> hex >> hexa;
+        int base = hexa >> offSet << offSet;
+        int j = 0;
         bool salir = false;
         if(cont == frames){
-            while(i<frames && !salir){
-                if (marcos[i] == base){
+            while(j<frames && !salir){
+                if (marcos[j] == base){
                     salir = true; 
                 }
-                i++;
+                j++;
             }
         
             //FIFO
@@ -213,11 +116,11 @@ int fifo(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int con
             }
         }else{
             
-            while(i < cont && !salir){
-                if(marcos[i] == base){
+            while(j < cont && !salir){
+                if(marcos[j] == base){
                     salir = true;
                 }
-                i++;
+                j++;
             }
                 
             if(!salir){
@@ -225,18 +128,20 @@ int fifo(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int con
                 cont++;
             }
         }
-        cout << "direccion: " << dato;
-        for(int i = 0; i< frames; i++){
-            cout << "  f" << i << ": " << marcos[i];
+        cout << "[ ";
+        for(int k = 0; k< frames; k++){
+            stringstream stream;
+            stream << hex << marcos[k];
+            cout << stream.str() << " ";
         }
-        cout << endl;
-        cout<<endl<<"Page Faults:"<<pageFault;            
-        
-        
+        cout <<"]" << endl;
     }
+    cout<<endl<<"Page Faults: "<<pageFault<<endl;
 }
 
-int LRU(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont){
+void LRU(int *marcos,vector<string>& paginas,int offSet,int frames){
+    int cont = 0;
+    int siguiente = 0;
     int pageFault = 0;
     int arrPeso[frames];
     int peso = frames;
@@ -247,28 +152,29 @@ int LRU(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont
     }
     int arrLength(sizeof(arrPeso)/sizeof(arrPeso[0]));
     string dato;
-    while (cin >> dato){
-        int base = sacarBase(dato,bitAddress,tamPag);
-        cout << "base: " << base << endl;
-        int i = 0;
+    
+    for (int i = 0; i < paginas.size();i++){ 
+        stringstream str;
+        str << paginas.at(i);
+        int hexa;
+        str >> hex >> hexa;
+        int base = hexa >> offSet << offSet;
+        int j = 0;
         bool salir = false;
         int *max = max_element(arrPeso,arrPeso+arrLength);
         int posMax = distance(arrPeso,find(arrPeso,arrPeso+arrLength,*max));
         if(cont == frames){
-            while(i<frames && !salir){
-                if (marcos[i] == base){
+            while(j<frames && !salir){
+                if (marcos[j] == base){
                     salir = true;
                     for(int k = 0; k< frames; k++){
-                        arrPeso[k] +=1;
-                    }
-                arrPeso[posMax] = frames;
+                    arrPeso[k] +=1;                        }
+                    arrPeso[posMax] = frames;
                 }
-                i++;
+                j++;
             }
         
             //LRU
-            cout << "max: " << *max << endl;
-            cout << "posMax: " << posMax << endl;
             if(!salir){
                 marcos[posMax] = base;
                 for(int k = 0; k< frames; k++){
@@ -280,11 +186,11 @@ int LRU(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont
             
         }else{
             
-            while(i < cont && !salir){
-                if(marcos[i] == base){
+            while(j < cont && !salir){
+                if(marcos[j] == base){
                     salir = true;
                 }
-                i++;
+                j++;
             }
                 
             if(!salir){
@@ -292,41 +198,51 @@ int LRU(int bitAddress,int tamPag, int *marcos,int frames,int siguiente,int cont
                 cont++;
             }
         }
-        cout << "direccion: " << dato;
-        for(int i = 0; i< frames; i++){
-            cout << "  f" << i << ": " << marcos[i];
+        cout << "[ ";
+        for(int k = 0; k< frames; k++){
+            stringstream stream;
+            stream << hex << marcos[k];
+            cout << stream.str() << " ";
         }
-        cout << endl;    
-        cout<<endl<<"Page Faults:"<<pageFault;
-        
+        cout <<"]" << endl;            
     }
+    cout<<endl<<"Page Faults: "<<pageFault<<endl;    
 }
 
-int main(){
-    int bitAddress; //8
-    int tamPag = 0; //32
-    int frames = 0; //3
-    int algoritmo = 0; //0
-    cout << "ingrese parametros" << endl;
-    cin >> bitAddress >> tamPag >> frames >> algoritmo;
-    int marcos [frames]; //frames
-    // unsigned int marcos_Length(sizeof(marcos)/sizeof(marcos[0]));
-    int siguiente = 0;
-    int cont = 0;
-    int leerDireccion = 0;
+int main(int argc, char* argv[]){
+    if(argc != 5) {
+        cerr << "usage: <program_name> <bit_Address> <page_size> <frames> <algorithm>" << endl;
+        return 1;
+    }
+    int bitAddress = atoi(argv[1]); 
+    int tamPag = atoi(argv[2]); 
+    int frames = atoi(argv[3]); 
+    int algoritmo = atoi(argv[4]);
+    if(algoritmo > 2){
+        cerr << "0: FIFO  1: LRU  2: Optimo" << endl;
+        return 1;
+    }
+    if(potencia(getOffSet(tamPag)) == false){
+        cerr << "please provide a <page_size> power of 2" << endl;
+        return 1;
+    }
+    int marcos [frames]; 
+    string dato;
+    int i = 0;
+    vector<string>paginas;
+    while(cin >> dato){
+        paginas.push_back(dato);
+    }
+    for (int i = 0; i<frames;i++){
+        marcos[i] = -1;
+    }
+    int offSet = getOffSet(tamPag);
     if(algoritmo == 0){
-        fifo(bitAddress,tamPag,marcos,frames,siguiente,cont);
+        fifo(marcos,paginas,offSet,frames);
     }else if (algoritmo == 1){
-        LRU(bitAddress,tamPag,marcos,frames,siguiente,cont);
+        LRU(marcos,paginas,offSet,frames);
     }else if (algoritmo ==2){
-        optimo(bitAddress,tamPag,marcos,frames,siguiente,cont);
+        optimo(marcos,paginas,offSet,frames);
     }
     return 0;
 }
-
-
-
-       
-
-
-
